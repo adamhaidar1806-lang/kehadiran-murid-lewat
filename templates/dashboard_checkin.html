@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}Check-In Murid Lewat - Sistem Kehadiran Lewat{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard_overview') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Check-In</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card fade-in-up">
+                <div class="card-header">
+                    <i class="fas fa-user-clock me-2"></i>Check-In Murid Lewat
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="checkinForm">
+                        <input type="hidden" name="murid_id" id="murid_id">
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-search me-1"></i>Cari Nama Murid
+                            </label>
+                            <div class="search-container">
+                                <input type="text" id="search-nama" class="form-control form-control-lg" 
+                                       placeholder="Taip nama murid untuk mencari..."
+                                       oninput="searchMurid(this.value)" autocomplete="off">
+                                <div id="search-results" class="search-results"></div>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Taip sekurang-kurangnya 2 aksara untuk mencari
+                            </small>
+                        </div>
+                        
+                        <div id="selected-murid" class="alert alert-success mb-4" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="alert-heading mb-2">
+                                        <i class="fas fa-user-check me-2"></i>Murid Dipilih
+                                    </h5>
+                                    <p class="mb-1"><strong>Nama:</strong> <span id="display-nama"></span></p>
+                                    <p class="mb-1"><strong>IC:</strong> <span id="display-ic"></span></p>
+                                    <p class="mb-1"><strong>Kelas:</strong> <span id="display-kelas"></span></p>
+                                    <p class="mb-0"><strong>Jantina:</strong> <span id="display-jantina"></span></p>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="clearSelection()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="manual-form" style="display: none;">
+                            <div class="alert alert-info mb-4">
+                                <i class="fas fa-edit me-2"></i>
+                                Murid tidak dijumpai. Sila isi maklumat secara manual.
+                            </div>
+                            
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Nama Penuh</label>
+                                    <input type="text" name="nama_penuh" class="form-control" placeholder="Nama penuh murid">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">No. IC</label>
+                                    <input type="text" name="ic" class="form-control" placeholder="Contoh: 070101-14-1234">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Kelas</label>
+                                    <select name="kelas_id" class="form-select">
+                                        <option value="">-- Pilih Kelas --</option>
+                                        {% for tingkatan in tingkatan_list %}
+                                        <optgroup label="{{ tingkatan.nama }}">
+                                            {% for kelas in tingkatan.kelas %}
+                                            <option value="{{ kelas.id }}">{{ kelas.nama_kelas }}</option>
+                                            {% endfor %}
+                                        </optgroup>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Jantina</label>
+                                    <select name="jantina" class="form-select">
+                                        <option value="">-- Pilih Jantina --</option>
+                                        <option value="Lelaki">Lelaki</option>
+                                        <option value="Perempuan">Perempuan</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-clock me-1"></i>Minit Lewat
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" name="minit_lewat" class="form-control" 
+                                           placeholder="Contoh: 15" min="1" max="120">
+                                    <span class="input-group-text">minit</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-tag me-1"></i>Kategori Alasan
+                                </label>
+                                <select id="category-select" class="form-select" onchange="updateAlasanPlaceholder()">
+                                    <option value="">-- Auto detect --</option>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}" data-keywords="{{ cat.keywords }}">{{ cat.nama }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-comment me-1"></i>Alasan Lewat
+                            </label>
+                            <textarea name="alasan" id="alasan-input" class="form-control" rows="2"
+                                      placeholder="Contoh: Hujan lebat, jalan sesak, ibu sakit..."></textarea>
+                            <small class="text-muted">
+                                <i class="fas fa-magic me-1"></i>
+                                System akan auto-detect kategori berdasarkan alasan yang diisi
+                            </small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-sticky-note me-1"></i>Nota Tambahan (Pilihan)
+                            </label>
+                            <textarea name="nota" class="form-control" rows="2"
+                                      placeholder="Sebarang catatan tambahan..."></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary-custom btn-lg ripple">
+                                <i class="fas fa-check-circle me-2"></i>Check-In Sekarang
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                Masa semasa: <strong id="current-time"></strong>
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4 fade-in-up" style="animation-delay: 0.2s;">
+                <div class="card-header">
+                    <i class="fas fa-lightbulb me-2"></i>Panduan Kategori Alasan
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded">
+                                <h6 class="text-primary"><i class="fas fa-cloud-rain me-2"></i>Iklim/Cuaca</h6>
+                                <small class="text-muted">Hujan lebat, panas, ribut, banjir, kilat</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded">
+                                <h6 class="text-danger"><i class="fas fa-home me-2"></i>Masalah Keluarga</h6>
+                                <small class="text-muted">Ibu/bapa sakit, kecemasan, tiada penghantar</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded">
+                                <h6 class="text-warning"><i class="fas fa-car me-2"></i>Masalah Transport</h6>
+                                <small class="text-muted">Jalan sesak, kereta rosak, tayar pancit</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let searchTimeout;
+
+function searchMurid(query) {
+    clearTimeout(searchTimeout);
+    
+    if (query.length < 2) {
+        $('#search-results').removeClass('active').empty();
+        return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+        $.get('/api/search-murid', { q: query }, function(data) {
+            const resultsDiv = $('#search-results');
+            resultsDiv.empty();
+            
+            if (data.length === 0) {
+                resultsDiv.append(`
+                    <div class="search-result-item text-muted">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Tiada murid dijumpai. Sila isi maklumat manual.
+                    </div>
+                `);
+                $('#manual-form').slideDown();
+                $('#selected-murid').slideUp();
+            } else {
+                data.forEach(function(murid) {
+                    resultsDiv.append(`
+                        <div class="search-result-item" onclick="selectMurid(${murid.id}, '${murid.nama_penuh}', '${murid.ic}', '${murid.kelas}', '${murid.jantina}')">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${murid.nama_penuh}</strong><br>
+                                    <small class="text-muted">${murid.ic} | ${murid.kelas}</small>
+                                </div>
+                                <span class="badge ${murid.jantina === 'Lelaki' ? 'bg-primary' : 'bg-danger'}">${murid.jantina}</span>
+                            </div>
+                        </div>
+                    `);
+                });
+                $('#manual-form').slideUp();
+            }
+            
+            resultsDiv.addClass('active');
+        });
+    }, 300);
+}
+
+function selectMurid(id, nama, ic, kelas, jantina) {
+    $('#murid_id').val(id);
+    $('#search-nama').val(nama);
+    $('#display-nama').text(nama);
+    $('#display-ic').text(ic);
+    $('#display-kelas').text(kelas);
+    $('#display-jantina').text(jantina);
+    $('#selected-murid').slideDown();
+    $('#search-results').removeClass('active');
+    $('#manual-form').slideUp();
+}
+
+function clearSelection() {
+    $('#murid_id').val('');
+    $('#search-nama').val('');
+    $('#selected-murid').slideUp();
+    $('#manual-form').slideUp();
+    $('#search-results').removeClass('active').empty();
+}
+
+function updateAlasanPlaceholder() {
+    const select = document.getElementById('category-select');
+    const keywords = select.options[select.selectedIndex].getAttribute('data-keywords');
+    if (keywords) {
+        document.getElementById('alasan-input').placeholder = `Contoh: ${keywords}`;
+    } else {
+        document.getElementById('alasan-input').placeholder = 'Contoh: Hujan lebat, jalan sesak, ibu sakit...';
+    }
+}
+
+function updateCurrentTime() {
+    const now = new Date();
+    document.getElementById('current-time').textContent = now.toLocaleTimeString('ms-MY');
+}
+
+updateCurrentTime();
+setInterval(updateCurrentTime, 1000);
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.search-container')) {
+        $('#search-results').removeClass('active');
+    }
+});
+
+$('#checkinForm').on('submit', function(e) {
+    const muridId = $('#murid_id').val();
+    const namaPenuh = $('input[name="nama_penuh"]').val();
+    
+    if (!muridId && !namaPenuh) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'warning',
+            title: 'Maklumat Tidak Lengkap',
+            text: 'Sila pilih murid atau isi maklumat secara manual.'
+        });
+        return false;
+    }
+    
+    showLoading();
+});
+</script>
+{% endblock %}

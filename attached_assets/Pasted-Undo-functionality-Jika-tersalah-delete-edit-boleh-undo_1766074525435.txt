@@ -1,0 +1,51 @@
+Undo functionality - Jika tersalah delete/edit, boleh undo dalam masa tertentu
+
+Favorite/bookmark - Bookmark murid tertentu untuk akses pantas (contoh: murid yang selalu lewat)
+
+Multi-language support (future) - Bahasa Melayu dan English toggle
+
+Advanced search - Cari murid guna multiple criteria sekaligus (nama + kelas + bulan)
+
+Print batch surat - Pilih multiple murid dan print semua surat amaran sekaligus
+
+Notes/remarks field - Guru boleh tambah nota pada setiap rekod kelewatan (contoh: "Alasan: hujan lebat")
+
+Comparison charts - Compare kelewatan antara kelas, antara bulan, trend naik/turun
+
+Email report (future) - Hantar laporan bulanan ke email pengetua secara automatik
+
+Keyboard shortcuts - Power users boleh guna shortcut untuk akses pantas (contoh: Ctrl+N untuk new entry
+
+Annual report generator - Generate laporan tahunan untuk setiap murid (total lewat setahun, trend, pattern)
+
+Academic year selector - Boleh pilih tahun persekolahan (contoh: 2024/2025, 2025/2026) untuk lihat data tahun lepas
+
+Top offenders list - Senarai top 10 murid paling kerap lewat (bulanan/tahunan)
+
+Class comparison - Compare performance antara kelas (kelas mana paling disiplin)
+
+Teacher dashboard stats - Untuk guru kelas, tunjuk statistik murid kelas mereka sahaja
+
+Export to Word template - Selain surat amaran, boleh customize template Word sendiri untuk dokumen lain
+
+Duplicate detection - System warning jika nama/IC sama ada dalam database (elak double entry)
+
+Archive old data - Archive data tahun lepas supaya system lebih pantas tapi data masih boleh akses
+
+Mobile-friendly check-in - Interface check-in yang optimize untuk tablet/phone (guru boleh check-in guna phone)
+
+Dashboard customization - User boleh susun widget/cards ikut preference sendiri
+
+Dashboard untuk ibu bapa (future phase) - Ibu bapa boleh lihat rekod anak mereka sendiri sahaja (guna no ibu bapa yang didaftarkan)(bulan ini)
+
+Sorting & pagination - Untuk list yang panjang, boleh sort by nama/kelas/tarikh dan ada page numbers
+
+Bulk import murid - Admin boleh upload Excel file untuk tambah ramai murid sekaligus, tak payah satu-satu
+
+Search history - Sistem ingat carian lepas untuk akses pantas
+
+Custom report builder - Buat laporan custom mengikut keperluan (contoh: semua murid perempuan Tingkatan 4 yang lewat bulan lepas)
+
+Data validation - Pastikan IC format betul, nombor telefon format betul sebelum submit
+
+Help tooltips - Icon (?) di sebelah form fields untuk bagi panduan ringkas

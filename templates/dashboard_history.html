@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Sejarah Kehadiran - Sistem Kehadiran Lewat{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard_overview') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Sejarah</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 class="mb-0">
+            <i class="fas fa-history me-2"></i>Sejarah Kehadiran Lewat
+        </h2>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('export_csv', filter=filter_type, month=request.args.get('month', ''), year=request.args.get('year', ''), date=request.args.get('date', ''), kelas=filter_kelas or '', jantina=filter_jantina or '', nama=filter_nama or '') }}" class="btn btn-success btn-sm">
+                <i class="fas fa-file-csv me-1"></i>Export CSV
+            </a>
+            <a href="{{ url_for('export_pdf') }}" class="btn btn-danger btn-sm">
+                <i class="fas fa-file-pdf me-1"></i>Export PDF
+            </a>
+        </div>
+    </div>
+    
+    <div class="card mb-4 fade-in-up">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small">Jenis Tapis</label>
+                    <select name="filter" class="form-select" onchange="toggleFilterFields(this.value)">
+                        <option value="weekly" {% if filter_type == 'weekly' %}selected{% endif %}>Mingguan</option>
+                        <option value="monthly" {% if filter_type == 'monthly' %}selected{% endif %}>Bulanan</option>
+                        <option value="date" {% if filter_type == 'date' %}selected{% endif %}>Tarikh Spesifik</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2 filter-monthly" style="{% if filter_type != 'monthly' %}display:none;{% endif %}">
+                    <label class="form-label small">Bulan</label>
+                    <select name="month" class="form-select">
+                        {% for m in range(1, 13) %}
+                        <option value="{{ m }}">{{ ['', 'Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'][m] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2 filter-monthly" style="{% if filter_type != 'monthly' %}display:none;{% endif %}">
+                    <label class="form-label small">Tahun</label>
+                    <select name="year" class="form-select">
+                        {% for y in range(2024, 2030) %}
+                        <option value="{{ y }}">{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2 filter-date" style="{% if filter_type != 'date' %}display:none;{% endif %}">
+                    <label class="form-label small">Tarikh</label>
+                    <input type="date" name="date" class="form-control">
+                </div>
+                
+                <div class="col-md-2">
+                    <label class="form-label small">Kelas</label>
+                    <select name="kelas" class="form-select">
+                        <option value="">Semua Kelas</option>
+                        {% for kelas in kelas_list %}
+                        <option value="{{ kelas.nama_kelas }}" {% if filter_kelas == kelas.nama_kelas %}selected{% endif %}>{{ kelas.nama_kelas }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <label class="form-label small">Jantina</label>
+                    <select name="jantina" class="form-select">
+                        <option value="">Semua</option>
+                        <option value="Lelaki" {% if filter_jantina == 'Lelaki' %}selected{% endif %}>Lelaki</option>
+                        <option value="Perempuan" {% if filter_jantina == 'Perempuan' %}selected{% endif %}>Perempuan</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <label class="form-label small">Nama</label>
+                    <input type="text" name="nama" class="form-control" placeholder="Cari nama..." value="{{ filter_nama }}">
+                </div>
+                
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary-custom w-100">
+                        <i class="fas fa-filter me-1"></i>Tapis
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="quick-stat-item text-center">
+                <i class="fas fa-users text-primary fa-2x mb-2"></i>
+                <h3 class="mb-0">{{ total }}</h3>
+                <small class="text-muted">Jumlah Keseluruhan</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="quick-stat-item text-center">
+                <i class="fas fa-male text-info fa-2x mb-2"></i>
+                <h3 class="mb-0">{{ lelaki }}</h3>
+                <small class="text-muted">Lelaki</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="quick-stat-item text-center">
+                <i class="fas fa-female text-danger fa-2x mb-2"></i>
+                <h3 class="mb-0">{{ perempuan }}</h3>
+                <small class="text-muted">Perempuan</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card fade-in-up">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-list me-2"></i>Rekod: {{ date_range }}</span>
+            <span class="badge bg-light text-dark">{{ records|length }} rekod</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-custom table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tarikh</th>
+                            <th>Masa</th>
+                            <th>Nama Murid</th>
+                            <th>Kelas</th>
+                            <th>Jantina</th>
+                            <th>Minit Lewat</th>
+                            <th>Kategori</th>
+                            <th>Alasan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>{{ record.tarikh.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ record.masa_sampai.strftime('%H:%M') }}</td>
+                            <td><strong>{{ record.murid.nama_penuh }}</strong></td>
+                            <td>{{ record.murid.kelas.nama_kelas }}</td>
+                            <td>
+                                <span class="badge {% if record.murid.jantina == 'Lelaki' %}bg-primary{% else %}bg-danger{% endif %}">
+                                    {{ record.murid.jantina }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if record.minit_lewat %}
+                                <span class="badge bg-warning text-dark">{{ record.minit_lewat }} min</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if record.category %}
+                                <span class="category-badge category-{{ record.category.nama|lower|replace('/', '')|replace(' ', '') }}">
+                                    {{ record.category.nama }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>{{ record.alasan or '-' }}</small>
+                                {% if record.nota %}
+                                <br><small class="text-muted"><i class="fas fa-sticky-note me-1"></i>{{ record.nota }}</small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">Tiada rekod dijumpai untuk tempoh ini.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleFilterFields(value) {
+    document.querySelectorAll('.filter-monthly').forEach(el => {
+        el.style.display = value === 'monthly' ? 'block' : 'none';
+    });
+    document.querySelectorAll('.filter-date').forEach(el => {
+        el.style.display = value === 'date' ? 'block' : 'none';
+    });
+}
+</script>
+{% endblock %}

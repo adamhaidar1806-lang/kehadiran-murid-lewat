@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Profil - Sistem Kehadiran Lewat{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard_overview') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Profil</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="mb-4">
+                <i class="fas fa-user-cog me-2"></i>Tetapan Profil
+            </h2>
+            
+            <div class="card mb-4 fade-in-up">
+                <div class="card-header">
+                    <i class="fas fa-user me-2"></i>Maklumat Profil
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="action" value="update_profile">
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nama Pengguna</label>
+                                <input type="text" class="form-control" value="{{ current_user.username }}" disabled>
+                                <small class="text-muted">Nama pengguna tidak boleh diubah</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Peranan</label>
+                                <input type="text" class="form-control" value="{{ current_user.role|upper }}" disabled>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nama Guru Bertugas</label>
+                            <input type="text" name="nama_guru" class="form-control" 
+                                   value="{{ current_user.nama_guru or '' }}" 
+                                   placeholder="Nama penuh guru">
+                            <small class="text-muted">Nama ini akan dipaparkan dalam surat amaran</small>
+                        </div>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Bertugas Dari</label>
+                                <input type="date" name="bertugas_dari" class="form-control" 
+                                       value="{{ current_user.bertugas_dari.strftime('%Y-%m-%d') if current_user.bertugas_dari else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Bertugas Hingga</label>
+                                <input type="date" name="bertugas_hingga" class="form-control"
+                                       value="{{ current_user.bertugas_hingga.strftime('%Y-%m-%d') if current_user.bertugas_hingga else '' }}">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary-custom">
+                            <i class="fas fa-save me-1"></i>Simpan Perubahan
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card fade-in-up" style="animation-delay: 0.2s;">
+                <div class="card-header">
+                    <i class="fas fa-key me-2"></i>Tukar Kata Laluan
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="action" value="change_password">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Kata Laluan Semasa</label>
+                            <input type="password" name="current_password" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Kata Laluan Baru</label>
+                            <input type="password" name="new_password" class="form-control" 
+                                   minlength="6" required>
+                            <small class="text-muted">Minimum 6 aksara</small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Sahkan Kata Laluan Baru</label>
+                            <input type="password" name="confirm_password" class="form-control" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-key me-1"></i>Tukar Kata Laluan
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4 fade-in-up" style="animation-delay: 0.3s;">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-2"></i>Maklumat Akaun
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Tarikh Daftar:</strong></p>
+                            <p class="text-muted">{{ current_user.created_at.strftime('%d/%m/%Y %H:%M') if current_user.created_at else 'Tidak diketahui' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Status Akaun:</strong></p>
+                            <span class="badge bg-success">Aktif</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

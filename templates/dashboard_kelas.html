@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}{{ kelas.nama_kelas }} - Sistem Kehadiran Lewat{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard_overview') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard_murid') }}">Pengurusan Murid</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('view_tingkatan', tingkatan_id=kelas.tingkatan_id) }}">{{ kelas.tingkatan.nama }}</a></li>
+<li class="breadcrumb-item active">{{ kelas.nama_kelas }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <a href="{{ url_for('view_tingkatan', tingkatan_id=kelas.tingkatan_id) }}" class="btn btn-outline-secondary btn-sm me-2">
+                <i class="fas fa-arrow-left me-1"></i>Kembali
+            </a>
+            <h2 class="d-inline-block mb-0">
+                <i class="fas fa-door-open me-2"></i>{{ kelas.nama_kelas }}
+            </h2>
+            {% if kelas.nama_guru_kelas %}
+            <small class="text-muted d-block ms-5 ps-4">
+                <i class="fas fa-chalkboard-teacher me-1"></i>{{ kelas.nama_guru_kelas }}
+            </small>
+            {% endif %}
+        </div>
+        <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addMuridModal">
+            <i class="fas fa-user-plus me-1"></i>Tambah Murid
+        </button>
+    </div>
+    
+    {% if murid_list %}
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-custom table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th width="40">
+                                <input type="checkbox" class="form-check-input checkbox-custom" onclick="toggleSelectAll(this)">
+                            </th>
+                            <th>Nama Penuh</th>
+                            <th>No. IC</th>
+                            <th>Jantina</th>
+                            <th>No. Ibu Bapa</th>
+                            <th width="150">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for murid in murid_list %}
+                        <tr class="fade-in-up" style="animation-delay: {{ loop.index * 0.03 }}s;">
+                            <td>
+                                <input type="checkbox" class="form-check-input checkbox-custom row-checkbox" 
+                                       value="{{ murid.id }}" onchange="updateBulkActions()">
+                            </td>
+                            <td>
+                                <strong>{{ murid.nama_penuh }}</strong>
+                                {% if murid.is_bookmarked %}
+                                <i class="fas fa-star text-warning ms-1"></i>
+                                {% endif %}
+                            </td>
+                            <td>{{ murid.ic }}</td>
+                            <td>
+                                <span class="badge {% if murid.jantina == 'Lelaki' %}bg-primary{% else %}bg-danger{% endif %}">
+                                    {{ murid.jantina }}
+                                </span>
+                            </td>
+                            <td>{{ murid.no_ibu_bapa or '-' }}</td>
+                            <td>
+                                <button class="action-btn edit" title="Edit" data-bs-toggle="modal" 
+                                        data-bs-target="#editMuridModal" 
+                                        data-id="{{ murid.id }}"
+                                        data-nama="{{ murid.nama_penuh }}"
+                                        data-ic="{{ murid.ic }}"
+                                        data-jantina="{{ murid.jantina }}"
+                                        data-no-ibu-bapa="{{ murid.no_ibu_bapa or '' }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn view" title="Pindah" data-bs-toggle="modal"
+                                        data-bs-target="#pindahModal"
+                                        data-id="{{ murid.id }}"
+                                        data-nama="{{ murid.nama_penuh }}">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </button>
+                                <a href="{{ url_for('delete_murid', murid_id=murid.id) }}" 
+                                   class="action-btn delete confirm-delete" title="Padam" data-name="{{ murid.nama_penuh }}">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer text-muted">
+            <i class="fas fa-users me-1"></i>Jumlah: {{ murid_list|length }} murid
+        </div>
+    </div>
+    
+    <div id="bulk-actions" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 bg-dark text-white p-3 rounded-pill shadow-lg" style="display: none; z-index: 1000;">
+        <span class="me-3"><span id="selected-count">0</span> dipilih</span>
+        <button class="btn btn-sm btn-danger me-2" onclick="bulkDelete()">
+            <i class="fas fa-trash me-1"></i>Padam
+        </button>
+        <button class="btn btn-sm btn-outline-light" onclick="clearSelection()">Batal</button>
+    </div>
+    
+    {% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-user-slash fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">Tiada Murid</h4>
+            <p class="text-muted mb-3">Belum ada murid dalam kelas ini.</p>
+            <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addMuridModal">
+                <i class="fas fa-user-plus me-1"></i>Tambah Murid Pertama
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="modal fade" id="addMuridModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>Tambah Murid Baru
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_murid') }}">
+                <input type="hidden" name="kelas_id" value="{{ kelas.id }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nama Penuh <span class="text-danger">*</span></label>
+                        <input type="text" name="nama_penuh" class="form-control" placeholder="Nama penuh murid" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">No. IC <span class="text-danger">*</span></label>
+                        <input type="text" name="ic" class="form-control" placeholder="Contoh: 070101-14-1234" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Jantina <span class="text-danger">*</span></label>
+                        <select name="jantina" class="form-select" required>
+                            <option value="">-- Pilih --</option>
+                            <option value="Lelaki">Lelaki</option>
+                            <option value="Perempuan">Perempuan</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">No. Telefon Ibu Bapa</label>
+                        <input type="text" name="no_ibu_bapa" class="form-control" placeholder="Contoh: 012-3456789">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="fas fa-save me-1"></i>Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editMuridModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Edit Murid
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editMuridForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nama Penuh</label>
+                        <input type="text" name="nama_penuh" id="edit-nama" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">No. IC</label>
+                        <input type="text" name="ic" id="edit-ic" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Jantina</label>
+                        <select name="jantina" id="edit-jantina" class="form-select" required>
+                            <option value="Lelaki">Lelaki</option>
+                            <option value="Perempuan">Perempuan</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">No. Telefon Ibu Bapa</label>
+                        <input type="text" name="no_ibu_bapa" id="edit-no-ibu-bapa" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="fas fa-save me-1"></i>Kemaskini
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="pindahModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exchange-alt me-2"></i>Pindah Murid
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="pindahForm" method="POST">
+                <div class="modal-body">
+                    <p>Pindahkan <strong id="pindah-nama"></strong> ke:</p>
+                    
+                    <div class="d-grid gap-3">
+                        <div class="form-check border rounded p-3">
+                            <input class="form-check-input" type="radio" name="action" id="action-kelas" value="pindah_kelas" checked>
+                            <label class="form-check-label w-100" for="action-kelas">
+                                <strong>Pindah ke Kelas Lain</strong>
+                                <select name="new_kelas_id" class="form-select mt-2">
+                                    <option value="">-- Pilih Kelas --</option>
+                                    {% for k in all_kelas %}
+                                    <option value="{{ k.id }}">{{ k.tingkatan.nama }} - {{ k.nama_kelas }}</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check border rounded p-3">
+                            <input class="form-check-input" type="radio" name="action" id="action-sekolah" value="pindah_sekolah">
+                            <label class="form-check-label" for="action-sekolah">
+                                <strong class="text-danger">Pindah ke Sekolah Lain</strong>
+                                <br><small class="text-muted">Murid akan dipadamkan dari sistem</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="fas fa-check me-1"></i>Sahkan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('editMuridModal').addEventListener('show.bs.modal', function(event) {
+    const button = event.relatedTarget;
+    const id = button.getAttribute('data-id');
+    const nama = button.getAttribute('data-nama');
+    const ic = button.getAttribute('data-ic');
+    const jantina = button.getAttribute('data-jantina');
+    const noIbuBapa = button.getAttribute('data-no-ibu-bapa');
+    
+    document.getElementById('editMuridForm').action = `/dashboard/murid/${id}/edit`;
+    document.getElementById('edit-nama').value = nama;
+    document.getElementById('edit-ic').value = ic;
+    document.getElementById('edit-jantina').value = jantina;
+    document.getElementById('edit-no-ibu-bapa').value = noIbuBapa;
+});
+
+document.getElementById('pindahModal').addEventListener('show.bs.modal', function(event) {
+    const button = event.relatedTarget;
+    const id = button.getAttribute('data-id');
+    const nama = button.getAttribute('data-nama');
+    
+    document.getElementById('pindahForm').action = `/dashboard/murid/${id}/pindah`;
+    document.getElementById('pindah-nama').textContent = nama;
+});
+
+function toggleSelectAll(source) {
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = source.checked);
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checked = document.querySelectorAll('.row-checkbox:checked').length;
+    const bulkActions = document.getElementById('bulk-actions');
+    document.getElementById('selected-count').textContent = checked;
+    bulkActions.style.display = checked > 0 ? 'block' : 'none';
+}
+
+function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+}
+
+function clearSelection() {
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+    document.querySelector('thead input[type="checkbox"]').checked = false;
+    updateBulkActions();
+}
+
+function bulkDelete() {
+    const selected = getSelectedIds();
+    if (selected.length === 0) return;
+    
+    Swal.fire({
+        title: `Padam ${selected.length} murid?`,
+        text: 'Tindakan ini tidak boleh dibatalkan!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, padam semua!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            selected.forEach((id, index) => {
+                setTimeout(() => {
+                    window.location.href = `/dashboard/murid/${id}/delete`;
+                }, index * 100);
+            });
+        }
+    });
+}
+</script>
+{% endblock %}

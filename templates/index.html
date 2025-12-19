@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Kehadiran Lewat Sekolah</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .hero-section {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            animation: bg-scroll 20s linear infinite;
+        }
+        
+        @keyframes bg-scroll {
+            from { background-position: 0 0; }
+            to { background-position: 60px 60px; }
+        }
+        
+        .hero-content {
+            text-align: center;
+            color: white;
+            z-index: 1;
+            padding: 2rem;
+        }
+        
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .hero-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 3rem;
+        }
+        
+        .bubbles-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .bubble-stat {
+            background: white;
+            border-radius: 50%;
+            width: 180px;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: bubble-float 4s ease-in-out infinite;
+            cursor: default;
+            transition: transform 0.3s ease;
+        }
+        
+        .bubble-stat:hover {
+            transform: scale(1.05);
+        }
+        
+        @keyframes bubble-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        .bubble-stat.main {
+            width: 220px;
+            height: 220px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+        }
+        
+        .bubble-stat.male {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            animation-delay: 0.5s;
+        }
+        
+        .bubble-stat.female {
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
+            animation-delay: 1s;
+        }
+        
+        .bubble-stat .number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #343a40;
+        }
+        
+        .bubble-stat.main .number {
+            font-size: 4rem;
+        }
+        
+        .bubble-stat .label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-align: center;
+            padding: 0 1rem;
+        }
+        
+        .bubble-stat .icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.7;
+        }
+        
+        .menu-toggle {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 55px;
+            height: 55px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        
+        .menu-toggle span {
+            width: 24px;
+            height: 3px;
+            background: #343a40;
+            margin: 3px 0;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        
+        .menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+        
+        .login-sidebar {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 420px;
+            height: 100%;
+            background: white;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.2);
+            transition: right 0.4s ease;
+            z-index: 1001;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        
+        .login-sidebar.active {
+            right: 0;
+        }
+        
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .login-header .icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        
+        .login-header .icon i {
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .login-header h2 {
+            color: #343a40;
+            font-weight: 700;
+        }
+        
+        .login-form .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .login-form .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+        
+        .login-form .form-label {
+            font-weight: 600;
+            color: #343a40;
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-form .btn-login {
+            width: 100%;
+            padding: 0.9rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .login-form .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .close-sidebar {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 40px;
+            height: 40px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close-sidebar:hover {
+            background: #e9ecef;
+            transform: rotate(90deg);
+        }
+        
+        .info-cards {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .info-card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+        
+        .info-card:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-5px);
+        }
+        
+        .info-card i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-card h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .info-card p {
+            margin: 0.5rem 0 0;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .shape {
+            position: absolute;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            animation: float-shape 15s infinite;
+        }
+        
+        .shape:nth-child(1) {
+            width: 100px;
+            height: 100px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .shape:nth-child(2) {
+            width: 150px;
+            height: 150px;
+            top: 60%;
+            left: 5%;
+            animation-delay: 2s;
+        }
+        
+        .shape:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            top: 40%;
+            right: 10%;
+            animation-delay: 4s;
+        }
+        
+        .shape:nth-child(4) {
+            width: 120px;
+            height: 120px;
+            bottom: 20%;
+            right: 15%;
+            animation-delay: 6s;
+        }
+        
+        .shape:nth-child(5) {
+            width: 60px;
+            height: 60px;
+            top: 10%;
+            right: 25%;
+            animation-delay: 8s;
+        }
+        
+        @keyframes float-shape {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+        
+        .time-widget {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1rem 2rem;
+            display: inline-block;
+            margin-bottom: 2rem;
+        }
+        
+        .time-widget .time {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .time-widget .date {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .bubble-stat {
+                width: 140px;
+                height: 140px;
+            }
+            
+            .bubble-stat .number {
+                font-size: 2rem;
+            }
+            
+            .bubble-stat.main {
+                width: 180px;
+                height: 180px;
+            }
+            
+            .bubble-stat.main .number {
+                font-size: 3rem;
+            }
+            
+            .login-sidebar {
+                width: 100%;
+                right: -100%;
+            }
+            
+            .info-cards {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <div class="floating-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+        
+        <div class="hero-content animate__animated animate__fadeIn">
+            <div class="time-widget animate__animated animate__fadeInDown">
+                <div class="time" id="current-time">--:--:--</div>
+                <div class="date" id="current-date">Loading...</div>
+            </div>
+            
+            <h1 class="hero-title animate__animated animate__fadeInUp">
+                <i class="fas fa-school me-3"></i>Sistem Kehadiran Lewat
+            </h1>
+            <p class="hero-subtitle animate__animated animate__fadeInUp animate__delay-1s">
+                Rekod dan pantau kehadiran lewat murid dengan mudah dan efisyen
+            </p>
+            
+            <div class="bubbles-container">
+                <div class="bubble-stat male animate__animated animate__zoomIn animate__delay-1s">
+                    <i class="fas fa-male icon" style="color: #1976d2;"></i>
+                    <span class="number" id="stat-lelaki">{{ stats.lelaki }}</span>
+                    <span class="label">Lelaki Minggu Ini</span>
+                </div>
+                
+                <div class="bubble-stat main animate__animated animate__zoomIn">
+                    <i class="fas fa-user-clock icon" style="color: #343a40;"></i>
+                    <span class="number" id="stat-total">{{ stats.total }}</span>
+                    <span class="label">Jumlah Lewat Minggu Ini</span>
+                </div>
+                
+                <div class="bubble-stat female animate__animated animate__zoomIn animate__delay-1s">
+                    <i class="fas fa-female icon" style="color: #c2185b;"></i>
+                    <span class="number" id="stat-perempuan">{{ stats.perempuan }}</span>
+                    <span class="label">Perempuan Minggu Ini</span>
+                </div>
+            </div>
+            
+            <div class="info-cards">
+                <div class="info-card animate__animated animate__fadeInUp animate__delay-2s">
+                    <i class="fas fa-clock"></i>
+                    <h5>Rekod Masa Nyata</h5>
+                    <p>Catat kehadiran dengan segera</p>
+                </div>
+                <div class="info-card animate__animated animate__fadeInUp animate__delay-2s">
+                    <i class="fas fa-chart-bar"></i>
+                    <h5>Analisis Lengkap</h5>
+                    <p>Statistik dan laporan terperinci</p>
+                </div>
+                <div class="info-card animate__animated animate__fadeInUp animate__delay-2s">
+                    <i class="fas fa-file-word"></i>
+                    <h5>Surat Amaran Auto</h5>
+                    <p>Jana surat dengan satu klik</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="menu-toggle" onclick="toggleSidebar()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+    
+    <div class="sidebar-overlay" onclick="closeSidebar()"></div>
+    
+    <div class="login-sidebar">
+        <button class="close-sidebar" onclick="closeSidebar()">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <div class="login-header">
+            <div class="icon">
+                <i class="fas fa-user-lock"></i>
+            </div>
+            <h2>Log Masuk</h2>
+            <p class="text-muted">Sila masukkan maklumat log masuk anda</p>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form class="login-form" method="POST" action="{{ url_for('login') }}">
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="fas fa-user me-2"></i>Nama Pengguna
+                </label>
+                <input type="text" name="username" class="form-control" placeholder="Masukkan nama pengguna" required autofocus>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="fas fa-lock me-2"></i>Kata Laluan
+                </label>
+                <input type="password" name="password" class="form-control" placeholder="Masukkan kata laluan" required>
+            </div>
+            
+            <button type="submit" class="btn btn-login">
+                <i class="fas fa-sign-in-alt me-2"></i>Log Masuk
+            </button>
+        </form>
+        
+        <div class="text-center mt-4">
+            <small class="text-muted">
+                <i class="fas fa-shield-alt me-1"></i>
+                Sistem ini dilindungi dan dipantau
+            </small>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.login-sidebar').classList.toggle('active');
+            document.querySelector('.sidebar-overlay').classList.toggle('active');
+            document.querySelector('.menu-toggle').classList.toggle('active');
+        }
+        
+        function closeSidebar() {
+            document.querySelector('.login-sidebar').classList.remove('active');
+            document.querySelector('.sidebar-overlay').classList.remove('active');
+            document.querySelector('.menu-toggle').classList.remove('active');
+        }
+        
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateStr = now.toLocaleDateString('ms-MY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            document.getElementById('current-time').textContent = timeStr;
+            document.getElementById('current-date').textContent = dateStr;
+        }
+        
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        function animateNumber(element, target) {
+            let current = 0;
+            const increment = Math.ceil(target / 30);
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.textContent = current;
+            }, 50);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                animateNumber(document.getElementById('stat-total'), {{ stats.total }});
+                animateNumber(document.getElementById('stat-lelaki'), {{ stats.lelaki }});
+                animateNumber(document.getElementById('stat-perempuan'), {{ stats.perempuan }});
+            }, 500);
+        });
+        
+        setInterval(function() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('stat-total').textContent = data.total;
+                    document.getElementById('stat-lelaki').textContent = data.lelaki;
+                    document.getElementById('stat-perempuan').textContent = data.perempuan;
+                });
+        }, 30000);
+    </script>
+</body>
+</html>
